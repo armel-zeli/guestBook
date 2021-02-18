@@ -24,7 +24,7 @@ disk: 512
 
 relationships:
     database: "db:postgresql"
-    
+
 web:
     locations:
         "/":
