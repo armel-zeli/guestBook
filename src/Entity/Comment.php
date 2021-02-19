@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=CommentRepository::class)
+ * @ORM\HasLifecycleCallbacks()
  */
 class Comment
 {
@@ -48,21 +49,34 @@ class Comment
      */
     private $photoFilename;
 
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return (string) $this->getEmail();
     }
 
+    /**
+     * @return int|null
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * @return null|string
+     */
     public function getAuthor(): ?string
     {
         return $this->author;
     }
 
+    /**
+     * @param string $author
+     * @return Comment
+     */
     public function setAuthor(string $author): self
     {
         $this->author = $author;
@@ -70,11 +84,18 @@ class Comment
         return $this;
     }
 
+    /**
+     * @return null|string
+     */
     public function getText(): ?string
     {
         return $this->text;
     }
 
+    /**
+     * @param string $text
+     * @return Comment
+     */
     public function setText(string $text): self
     {
         $this->text = $text;
@@ -82,11 +103,18 @@ class Comment
         return $this;
     }
 
+    /**
+     * @return null|string
+     */
     public function getEmail(): ?string
     {
         return $this->email;
     }
 
+    /**
+     * @param string $email
+     * @return Comment
+     */
     public function setEmail(string $email): self
     {
         $this->email = $email;
@@ -94,11 +122,19 @@ class Comment
         return $this;
     }
 
+    /**
+     * @return \DateTimeInterface|null
+     */
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
     }
 
+
+    /**
+     * @param \DateTimeInterface $createdAt
+     * @return Comment
+     */
     public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
@@ -106,11 +142,27 @@ class Comment
         return $this;
     }
 
+
+    /**
+     * @ORM\PrePersist()
+     */
+    public function setCreatedAtValue()
+    {
+        $this->createdAt = new \DateTime();
+    }
+
+    /**
+     * @return Conference|null
+     */
     public function getConference(): ?Conference
     {
         return $this->conference;
     }
 
+    /**
+     * @param Conference|null $conference
+     * @return Comment
+     */
     public function setConference(?Conference $conference): self
     {
         $this->conference = $conference;
@@ -118,11 +170,18 @@ class Comment
         return $this;
     }
 
+    /**
+     * @return null|string
+     */
     public function getPhotoFilename(): ?string
     {
         return $this->photoFilename;
     }
 
+    /**
+     * @param null|string $photoFilename
+     * @return Comment
+     */
     public function setPhotoFilename(?string $photoFilename): self
     {
         $this->photoFilename = $photoFilename;

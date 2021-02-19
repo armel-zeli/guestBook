@@ -6,9 +6,12 @@ use App\Repository\ConferenceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
  * @ORM\Entity(repositoryClass=ConferenceRepository::class)
+ * @UniqueEntity("slug")
  */
 class Conference
 {
@@ -39,11 +42,22 @@ class Conference
      */
     private $comments;
 
+    /**
+     * @ORM\Column(type="string", length=255, unique=true)
+     */
+    private $slug;
+
+    /**
+     * Conference constructor.
+     */
     public function __construct()
     {
         $this->comments = new ArrayCollection();
     }
 
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return $this->getCity(). ' ' . $this->getYear();
@@ -57,6 +71,13 @@ class Conference
         return $this->id;
     }
 
+    public function computeSlug(SluggerInterface $slugger)
+    {
+        if(!$this->slug || '-' === $this->slug){
+            $this->slug = (string) $slugger->slug((string)$this)->lower();
+        }
+
+    }
     /**
      * @return null|string
      */
@@ -122,6 +143,10 @@ class Conference
         return $this->comments;
     }
 
+    /**
+     * @param Comment $comment
+     * @return Conference
+     */
     public function addComment(Comment $comment): self
     {
         if (!$this->comments->contains($comment)) {
@@ -132,6 +157,10 @@ class Conference
         return $this;
     }
 
+    /**
+     * @param Comment $comment
+     * @return Conference
+     */
     public function removeComment(Comment $comment): self
     {
         if ($this->comments->removeElement($comment)) {
@@ -140,6 +169,25 @@ class Conference
                 $comment->setConference(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    /**
+     * @param string $slug
+     * @return Conference
+     */
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
 
         return $this;
     }
