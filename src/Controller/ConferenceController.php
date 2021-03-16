@@ -7,6 +7,7 @@ use App\Entity\Comment;
 use App\Form\CommentFormType;
 use App\Repository\CommentRepository;
 use App\Repository\ConferenceRepository;
+use App\SpamChecker;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,11 +42,15 @@ class ConferenceController extends AbstractController
      * @param Conference $conference
      * @param CommentRepository $commentRepository
      * @param string $photoDir
+     * @param SpamChecker $spamChecker
      * @return Response
      * @throws \Exception
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
-
-    public function show(Request $request, Conference $conference, CommentRepository $commentRepository, string $photoDir) : Response
+    public function show(Request $request, Conference $conference, CommentRepository $commentRepository, string $photoDir, SpamChecker $spamChecker) : Response
     {
         $offset = max(0, $request->query->getInt('offset', 0));
         $paginator = $commentRepository->getCommentPaginator($conference, $offset);
@@ -67,6 +72,18 @@ class ConferenceController extends AbstractController
                 }
             }
             $this->entityManager->persist($comment);
+
+            $context = [
+                'user_ip' => $request->getClientIp(),
+                'user_agent' => $request->headers->get('user-agent'),
+                'referrer' => $request->headers->get('referer'),
+                'permalink' =>$request->getUri()
+            ];
+
+            if( 2 === $spamChecker->getSpamScore($comment, $context)){
+                throw new \RuntimeException('Blatant spam, go away !');
+            }
+
             $this->entityManager->flush();
 
             return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()] );
