@@ -1,7 +1,8 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
-    secret:
-        decryption_env_var: ~
+    secret: '%env(APP_SECRET)%'
+    secrets:
+        decryption_env_var: 'base64:default::SYMFONY_DECRYPTION_SECRET'
     #csrf_protection: true
     #http_method_override: true
 
