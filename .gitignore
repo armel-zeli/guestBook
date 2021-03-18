@@ -8,5 +8,11 @@
 /public/uploads
 /var/
 /vendor/
+dump.sql
 ###< symfony/framework-bundle ###
 /.idea
+###> symfony/phpunit-bridge ###
+.phpunit
+.phpunit.result.cache
+/phpunit.xml
+###< symfony/phpunit-bridge ###
