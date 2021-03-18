@@ -18,6 +18,11 @@ class SpamChecker
     private $client;
     private $endpoint;
 
+    /**
+     * SpamChecker constructor.
+     * @param HttpClientInterface $client
+     * @param string $akismetKey
+     */
     public function __construct(HttpClientInterface $client,string $akismetKey)
     {
         $this->client = $client;
@@ -28,10 +33,6 @@ class SpamChecker
      * @param Comment $comment
      * @param array $context
      * @return int Spam score: 0: not spam, 1: maybe spam, 2: blatant spam
-     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
     public function getSpamScore(Comment $comment, array $context): int
     {

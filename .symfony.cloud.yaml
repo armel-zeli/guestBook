@@ -14,7 +14,7 @@ runtime:
 
 #variables:
 #    php:
-#        # uncomment on PHP 7.4+
+#        # uncomment on PHP 7.4
 #        #opcache.preload: /app/config/preload.php
 
 build:
@@ -50,5 +50,9 @@ hooks:
         set -x -e
 
         (>&2 symfony-deploy)
+workers:
+    messages:
+        commands:
+            start: symfony console messenger:consume async -vv --time-limit=3600 --memory-limit=128M
 
 

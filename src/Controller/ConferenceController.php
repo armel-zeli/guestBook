@@ -7,7 +7,8 @@ use App\Entity\Comment;
 use App\Form\CommentFormType;
 use App\Repository\CommentRepository;
 use App\Repository\ConferenceRepository;
-use App\SpamChecker;
+use App\Message\CommentMessage;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,10 +19,17 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 class ConferenceController extends AbstractController
 {
     private $entityManager;
+    private $bus;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    /**
+     * ConferenceController constructor.
+     * @param EntityManagerInterface $entityManager
+     * @param MessageBusInterface $bus
+     */
+    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $bus)
     {
         $this->entityManager = $entityManager;
+        $this->bus = $bus;
     }
 
     /**
@@ -50,7 +58,17 @@ class ConferenceController extends AbstractController
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
-    public function show(Request $request, Conference $conference, CommentRepository $commentRepository, string $photoDir, SpamChecker $spamChecker) : Response
+
+    /**
+     * @Route("/conference/{slug}", name="conference")
+     * @param Request $request
+     * @param Conference $conference
+     * @param CommentRepository $commentRepository
+     * @param string $photoDir
+     * @return Response
+     * @throws \Exception
+     */
+    public function show(Request $request, Conference $conference, CommentRepository $commentRepository, string $photoDir): Response
     {
         $offset = max(0, $request->query->getInt('offset', 0));
         $paginator = $commentRepository->getCommentPaginator($conference, $offset);
@@ -59,34 +77,32 @@ class ConferenceController extends AbstractController
 
         $form->handleRequest($request);
 
-        if($form->isSubmitted() && $form->isValid()){
+        if ($form->isSubmitted() && $form->isValid()) {
             $comment->setConference($conference);
 
-            if($photo = $form['photo']->getData()){
-                $filename = bin2hex(random_bytes(6)).'.'.$photo->guessExtension();
-                try{
+            if ($photo = $form['photo']->getData()) {
+                $filename = bin2hex(random_bytes(6)) . '.' . $photo->guessExtension();
+                try {
                     $photo->move($photoDir, $filename);
                     $comment->setPhotoFilename($filename);
-                } catch (FileException $e){
-                   // Unable to upload the photo
+                } catch (FileException $e) {
+                    // Unable to upload the photo
                 }
             }
+
             $this->entityManager->persist($comment);
+            $this->entityManager->flush();
 
             $context = [
                 'user_ip' => $request->getClientIp(),
                 'user_agent' => $request->headers->get('user-agent'),
                 'referrer' => $request->headers->get('referer'),
-                'permalink' =>$request->getUri()
+                'permalink' => $request->getUri()
             ];
 
-            if( 2 === $spamChecker->getSpamScore($comment, $context)){
-                throw new \RuntimeException('Blatant spam, go away !');
-            }
+            $this->bus->dispatch(new CommentMessage($comment->getId(), $context));
 
-            $this->entityManager->flush();
-
-            return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()] );
+            return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()]);
         }
 
         return $this->render('conference/show.html.twig', [
