@@ -50,21 +50,6 @@ class ConferenceController extends AbstractController
      * @param Conference $conference
      * @param CommentRepository $commentRepository
      * @param string $photoDir
-     * @param SpamChecker $spamChecker
-     * @return Response
-     * @throws \Exception
-     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     */
-
-    /**
-     * @Route("/conference/{slug}", name="conference")
-     * @param Request $request
-     * @param Conference $conference
-     * @param CommentRepository $commentRepository
-     * @param string $photoDir
      * @return Response
      * @throws \Exception
      */
