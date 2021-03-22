@@ -17,9 +17,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Workflow\Registry;
+use Symfony\Bundle\FrameworkBundle\HttpCache\HttpCache;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 
-
+/**
+ * @Route("/admin")
+ * Class AdminController
+ * @package App\Controller
+ */
 class AdminController extends AbstractController
 {
     private $entityManager;
@@ -30,27 +36,27 @@ class AdminController extends AbstractController
      * @param $entityManager
      * @param $bus
      */
-    public function __construct( EntityManagerInterface $entityManager, MessageBusInterface $bus)
+    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $bus)
     {
         $this->entityManager = $entityManager;
         $this->bus = $bus;
     }
 
     /**
-     * @Route("/admin/comment/review/{id}", name="review_comment")
+     * @Route("/comment/review/{id}", name="review_comment")
      * @param Request $request
      * @param Comment $comment
      * @param Registry $registry
      * @return Response
      */
-    public function reviewComment(Request $request, Comment $comment, Registry $registry ) : Response
+    public function reviewComment(Request $request, Comment $comment, Registry $registry): Response
     {
         $accepted = !$request->query->get('reject');
         $machine = $registry->get($comment);
 
-        if($machine->can($comment, 'publish')){
+        if ($machine->can($comment, 'publish')) {
             $transition = $accepted ? 'publish' : 'reject';
-        } elseif($machine->can($comment, 'publish_ham')){
+        } elseif ($machine->can($comment, 'publish_ham')) {
             $transition = $accepted ? 'publish_ham' : 'reject_ham';
         } else {
             return new Response('Comment already reviewed or not in the right state');
@@ -59,14 +65,33 @@ class AdminController extends AbstractController
         $machine->apply($comment, $transition);
         $this->entityManager->flush();
 
-        if(!$accepted){
+        if (!$accepted) {
             $this->bus->dispatch(new CommentMessage($comment->getId()));
         }
 
-        return $this->render('admin/review.html.twig',[
+        return $this->render('admin/review.html.twig', [
             'transition' => $transition,
             'comment' => $comment
         ]);
+    }
+
+    /**
+     * @Route("/http-cache/{uri<.*>}", methods={"PURGE"})
+     * @param KernelInterface $kernel
+     * @param Request $request
+     * @param string $uri
+     * @return Response
+     */
+    public function purgeHttpCache(KernelInterface $kernel, Request $request, string $uri): Response
+    {
+        if ('prod' === $kernel->getEnvironment()) {
+            return new Response('KO', 400);
+        }
+
+        $store = (new class($kernel) extends HttpCache{})->getStore();
+        $store->purge($request->getSchemeAndHttpHost() . '/' . $uri);
+
+        return new Response('Done');
     }
 
 
