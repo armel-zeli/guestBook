@@ -16,7 +16,12 @@
     <body>
     <header>
         <h1><a href="{{ path('homepage') }}">Guestbook</a></h1>
-            {{ render_esi(path('conference_header')) }}
+        <ul>
+            {% for conference in conferences %}
+                <li><a href="{{ path('conference', { slug: conference.slug }) }}">{{ conference }}</a></li>
+            {% endfor %}
+        </ul>
+
         <hr/>
     </header>
         {% block body %}{% endblock %}
