@@ -54,6 +54,7 @@ class AdminController extends AbstractController
         $accepted = !$request->query->get('reject');
         $machine = $registry->get($comment);
 
+
         if ($machine->can($comment, 'publish')) {
             $transition = $accepted ? 'publish' : 'reject';
         } elseif ($machine->can($comment, 'publish_ham')) {
@@ -65,7 +66,7 @@ class AdminController extends AbstractController
         $machine->apply($comment, $transition);
         $this->entityManager->flush();
 
-        if (!$accepted) {
+        if ($accepted) {
             $this->bus->dispatch(new CommentMessage($comment->getId()));
         }
 
