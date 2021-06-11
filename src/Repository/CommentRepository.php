@@ -20,21 +20,39 @@ class CommentRepository extends ServiceEntityRepository
     public const PAGINATOR_PER_PAGE = 2;
     private const DAYS_BEFORE_REJECTED_REMOVAL = 7;
 
+    /**
+     * CommentRepository constructor.
+     *
+     * @param ManagerRegistry $registry
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Comment::class);
     }
 
+    /**
+     * @return int
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
     public function countOldRejected(): int
     {
         return $this->getOldRejectedQueryBuilder()->select('COUNT(c.id)')->getQuery()->getSingleScalarResult();
     }
 
+    /**
+     * @return int
+     * @throws \Exception
+     */
     public function deleteOldRejected(): int
     {
         return $this->getOldRejectedQueryBuilder()->delete()->getQuery()->execute();
     }
 
+    /**
+     * @return QueryBuilder
+     * @throws \Exception
+     */
     private function getOldRejectedQueryBuilder(): QueryBuilder
     {
         return $this->createQueryBuilder('c')
@@ -49,6 +67,12 @@ class CommentRepository extends ServiceEntityRepository
     }
 
 
+    /**
+     * @param Conference $conference
+     * @param int $offset
+     *
+     * @return Paginator
+     */
     public function getCommentPaginator(Conference $conference, int $offset): Paginator
     {
         $query = $this->createQueryBuilder('c')
