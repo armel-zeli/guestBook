@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\ConferenceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -12,6 +13,9 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 /**
  * @ORM\Entity(repositoryClass=ConferenceRepository::class)
  * @UniqueEntity("slug")
+ * @ApiResource(
+ *     collectionOperations={}
+ * )
  */
 class Conference
 {
